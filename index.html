@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Clover Image Gallery</title>
+    <style>
+       * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+       }
+       body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #100d19, #25133c, #100d19);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 15px;
+       }
+       .gallery-container {
+            background: #191421;
+            width: 100%;
+            max-width: 900px;
+            padding: 30px;
+            border-radius: 18px;
+            border: 1px solid #a47b36;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h1 {
+            color: #e5bd65;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #c5b4d8;
+            margin-bottom: 25px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 430px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #a47b36;
+            cursor: zoom-in;
+        }
+
+        .caption {
+            margin: 15px 0;
+            padding: 12px;
+            color: #f1d28b;
+            background: #30213f;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .counter {
+            color: #c5b4d8;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #67409a;
+            color: white;
+            border: 1px solid #a47b36;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #9a6a32;
+            transform: translateY(-2px);
+        }
+
+        .dots {
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            padding: 0;
+            margin: 0 5px;
+            border-radius: 50%;
+            background: #69577c;
+        }
+
+        .dot.active {
+            background: #e5bd65;
+        }
+
+        .thumbnails {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .thumbnails img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.6;
+            border: 3px solid transparent;
+            transition: 0.3s;
+        }
+
+        .thumbnails img:hover,
+        .thumbnails img.selected {
+            opacity: 1;
+            border-color: #e5bd65;
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 10;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 10px;
+            border: 2px solid #e5bd65;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 35px;
+            background: transparent;
+        }
+
+        @media (max-width: 600px) {
+            .gallery-container {
+                padding: 18px;
+            }
+
+            .main-image {
+                height: 280px;
+            }
+
+            .thumbnails {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .thumbnails img {
+                height: 90px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="gallery-container">
+
+        <h1>BLACK CLOVER</h1>
+        <p class="subtitle">Magic, Adventure & Your Favorite Characters ✨</p>
+
+        <img
+            id="mainImage"
+            class="main-image"
+            src="images/asta.jpg"
+            alt="Asta"
+            onclick="openLightbox()"
+        >
+
+        <p class="caption" id="caption">Asta</p>
+
+        <p class="counter" id="counter">Image 1 of 6</p>
+
+        <div class="controls">
+            <button onclick="previousImage()">❮ Previous</button>
+            <button onclick="nextImage()">Next ❯</button>
+        </div>
+
+        <div class="dots" id="dots"></div>
+
+        <div class="thumbnails" id="thumbnails"></div>
+
+        <div class="controls" style="margin-top: 25px;">
+            <button onclick="toggleSlideshow()" id="playButton">
+                ▶ Play Slideshow
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Full Image View -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="close" aria-label="Close">×</button>
+        <img id="lightboxImage" src="" alt="Full size character">
+    </div>
+
+    <script>
+
+        // Gallery Images
+        const images = [
+            { src: "images/asta.jpg", title: "Asta" },
+            { src: "images/yuno.jpg", title: "Yuno" },
+            { src: "images/noelle.jpg", title: "Noelle Silva" },
+            { src: "images/yami.jpg", title: "Yami Sukehiro" },
+            { src: "images/luck.jpg", title: "Luck Voltia" },
+            { src: "images/liebe.jpg", title: "Liebe" }
+        ];
+
+        let currentIndex = 0;
+        let slideshow = null;
+
+        const mainImage = document.getElementById("mainImage");
+        const caption = document.getElementById("caption");
+        const counter = document.getElementById("counter");
+        const thumbnails = document.getElementById("thumbnails");
+        const dots = document.getElementById("dots");
+
+        // Display Image
+        function showImage(index) {
+
+            currentIndex = (index + images.length) % images.length;
+
+            mainImage.src = images[currentIndex].src;
+            mainImage.alt = images[currentIndex].title;
+
+            caption.textContent = images[currentIndex].title;
+
+            counter.textContent =
+                `Image ${currentIndex + 1} of ${images.length}`;
+
+            document.getElementById("lightboxImage").src =
+                images[currentIndex].src;
+
+            updateThumbnails();
+            updateDots();
+        }
+
+        // Next Image
+        function nextImage() {
+            showImage(currentIndex + 1);
+        }
+
+        // Previous Image
+        function previousImage() {
+            showImage(currentIndex - 1);
+        }
+
+        // Create Thumbnails
+        function createThumbnails() {
+
+            images.forEach((image, index) => {
+
+                const thumbnail = document.createElement("img");
+
+                thumbnail.src = image.src;
+                thumbnail.alt = image.title;
+
+                thumbnail.onclick = function() {
+                    showImage(index);
+                };
+
+                thumbnails.appendChild(thumbnail);
+            });
+        }
+
+        // Update Thumbnails
+        function updateThumbnails() {
+
+            const allThumbnails =
+                document.querySelectorAll(".thumbnails img");
+
+            allThumbnails.forEach((thumbnail, index) => {
+
+                thumbnail.classList.toggle(
+                    "selected",
+                    index === currentIndex
+                );
+
+            });
+        }
+
+        // Create Navigation Dots
+        function createDots() {
+
+            images.forEach((image, index) => {
+
+                const dot = document.createElement("button");
+
+                dot.className = "dot";
+                dot.setAttribute("aria-label", `Show image ${index + 1}`);
+
+                dot.onclick = function() {
+                    showImage(index);
+                };
+
+                dots.appendChild(dot);
+            });
+        }
+
+        // Update Dots
+        function updateDots() {
+
+            const allDots = document.querySelectorAll(".dot");
+
+            allDots.forEach((dot, index) => {
+
+                dot.classList.toggle(
+                    "active",
+                    index === currentIndex
+                );
+
+            });
+        }
+
+        // Play / Pause Slideshow
+        function toggleSlideshow() {
+
+            const playButton =
+                document.getElementById("playButton");
+
+            if (slideshow) {
+
+                clearInterval(slideshow);
+                slideshow = null;
+
+                playButton.textContent = "▶ Play Slideshow";
+
+            } else {
+
+                slideshow = setInterval(nextImage, 3000);
+
+                playButton.textContent = "❚❚ Pause Slideshow";
+            }
+        }
+
+        // Open Lightbox
+        function openLightbox() {
+
+            document.getElementById("lightbox").style.display = "flex";
+
+            document.getElementById("lightboxImage").src =
+                images[currentIndex].src;
+        }
+
+        // Close Lightbox
+        function closeLightbox() {
+
+            document.getElementById("lightbox").style.display = "none";
+        }
+
+        // Keyboard Navigation
+        document.addEventListener("keydown", function(event) {
+
+            if (event.key === "ArrowRight") {
+                nextImage();
+            }
+
+            if (event.key === "ArrowLeft") {
+                previousImage();
+            }
+
+            if (event.key === "Escape") {
+                closeLightbox();
+            }
+
+        });
+
+        // Initialize Gallery
+        createThumbnails();
+        createDots();
+        showImage(0);
+
+    </script>
+
+</body>
+</html>
